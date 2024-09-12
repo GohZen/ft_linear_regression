@@ -163,36 +163,33 @@ def main():
     norm_km, km_min, km_max = normalize(km)
     norm_price, price_min, price_max = normalize(price)
 
-
-
-    #print("norm_mileage:", norm_km, "mileage_min:", km_min, "mileage_max:", km_max)
-    #print("norm_price:", norm_price, "price_min:", price_min, "price_max:", price_max)
-
     # Entraîner le modèle
     theta0, theta1 = do_gradient_descent(norm_km, norm_price, theta0, theta1, alpha, num_iterations)
 
     print("theta0:", theta0, "theta1:", theta1)
 
     # Denormaliser les paramètres theta0 et theta1 pour les sauvegarder
-    # theta1 = theta1 * (price_max - price_min) / (km_max - km_min)
+    theta1_denom = theta1 * (price_max - price_min) / (km_max - km_min)
+    theta0_denom = price_min + theta0 * (price_max - price_min) - theta1_denom * km_min
 
-    # Sauvegarder les paramètres
-    save_params(theta0, theta1)
+    # Sauvegarder les paramètres dénormalisés
+    save_params(theta0_denom, theta1_denom)
 
+    # Prédictions avec les paramètres normalisés
+    prediction = calculate_precision(norm_km, norm_price, theta0, theta1)
+
+    # Dénormaliser les prédictions pour tracer le graphique
+    prediction_denom = denormalize(np.array(prediction), price_min, price_max)
+
+    # Dénormaliser les km et les prix pour le tracé
     X_ok = denormalize(np.array(norm_km), km_min, km_max)
     y_ok = denormalize(np.array(norm_price), price_min, price_max)
 
     # Tracer les données et la ligne de régression
-
-    # predictions = model(norm_km, )
-
-    # Calculer la précision
-    prediction = calculate_precision(norm_km, norm_price, theta0, theta1)
-    print(f'PREDICTION BEFORE PLOT: {denormalize(prediction, price_min, price_max)}')
-    plot_data_and_regression_line(X_ok, y_ok, denormalize(np.array(prediction), price_min, price_max))
+    plot_data_and_regression_line(X_ok, y_ok, prediction_denom)
 
     print(f'R2_Score: {r2_score(norm_price, prediction)}')
-    print(f"Entraînement terminé. theta0 = {theta0:.12f}, theta1 = {theta1:.12f}")
+    print(f"Entraînement terminé. theta0 = {theta0_denom:.12f}, theta1 = {theta1_denom:.12f}")
 
 if __name__ == "__main__":
     main()

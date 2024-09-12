@@ -13,6 +13,7 @@ def estimate_price(number_of_miles, theta0, theta1):
 def main():
     # Charger les paramètres theta0 et theta1
     theta0, theta1 = load_params()
+    print(f'PREDICT theta0 : {theta0}, theta1 : {theta1}')
 
     # Demander à l'utilisateur d'entrer le kilométrage
     mileage = float(input("Entrez le kilométrage de la voiture: "))
