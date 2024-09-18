@@ -2,27 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Calcule le temps de process a chaque étape (calcul le cout ou l'erreur moyenne quadratique du modèle de régression)
-# - predicted_price = liste de val prédites par le modèle, basé sur theta0 et theta1 ainsi que les data d'entrée (kilométrage)
-# - price = liste des prix réels correspondant aux données d'entrainement.
-# - m = nombre total de points de données dans le dataset (nbr d'observation dispo)
-#
-# Pour chaque points de donnés, on calcul le carré de la différence entre la valeur prédite par le modèle (predicted_price[i])
-# et la valeur réelle (price[i]), cela permet de mesurer l'erreur quadratique pour ce point en particulier.
-#
-# La somme de toutes les erreurs quadratique ainsi récupérées est effectuée par la suite afin de la normaliser via '(1/(2*m))',
-# c est a dire en divisant la somme par "2*m", ce qui permet d'obtenir une mesure d'erreur moyenne quadratique.
 def compute_cost(predicted_price, price):  
     m = len(price)
     return (1/(2*m)) * np.sum([(price[i] - predicted_price[i]) ** 2 for i in range(m)])
 
-# Charge les données comprise dans le fichier CSV
-# Utilise la librairie Pandas pour lire le CSV et charger les données dans un dataframe nommé 'data'. il s'agit d'une structure
-# de donnés bidimensionnelle facilitant la manipulation et l'analyse des donnés tabulaires.
-# La fonction récupèrent 2 colonnes spécifiques du dataframe : 
-# - km_count = contient les valeurs des kilométrages pour chaque voitures, extraint de la colonne 'km' 
-# - price = contient les prix des voitures, extrait de la colonne 'price'
-# Renvoie 2 tableau (km_count et price)
 def load_data(file_path='ressources/data.csv'):
     data = pd.read_csv(file_path)
     km_count = data['km'].values
@@ -33,67 +16,14 @@ def load_data(file_path='ressources/data.csv'):
 
     return km_count, price
 
-# Utilisée pour normaliser les données. Il s'agit d'une étape importante de le prétraitement des datas.
-# - data = tableau des données a normaliser
-# - min_val / max_val = valeurs minimal / maximal trouvé dans le tableau de donnés
-# Les valeurs min / max sont utilisées pour mettre les donnés a l'échelle. La normalisation conciste a transformer
-# les valeurs d'une plage d'origine en une plage différente (souvent entre 0 et 1), afin d'améliorer les performances 
-#
-# "[(x - min_val) / (max_val - min_val) for x in data]"
-# --> Pour chaque valeurs 'x' dans 'data', on calcul une valeur normalisée en soustrayant la valeur minimale et en 
-#     divisant par l'étendue des valeurs (max_val - min_val). Cela met à l'échelle toutes les valeurs pour qu'elles 
-#     soient dans l'intervalle [0,1].
-# 
-# La fonction retourne 3 éléments : 
-# - Une liste de donnés normalisés
-# - La valeur minimale originale (min_val)
-# - La valeur maximale originale (max_val)
 def normalize(data):
     min_val = min(data)
     max_val = max(data)
     return [(x - min_val) / (max_val - min_val) for x in data], min_val, max_val
 
-# Utilisée pour convertir des valeurs normalisées (c'est-à-dire mises à l'échelle) de retour dans leur plage d'origine.
-# Prend 3 éléments en paramètre : 
-# - value = valeur normalisée que l'on souhaite convertir de retour dans la plage d'origine
-# - min_val = valeur minimale d'origine (avant normalisation)
-# - max_val = valeur maximale d'origine (avant normalisation)
-# 
-# Formule de dénormalisation : "value * (max_val - min_val) + min_val"
-# Cette formule inverse le processus de normalisation. 
-# Sachant que : normalisation = (ORIGINAL_VAL - MIN_VAL) / (MAX_VAL - MIN_VAL)
-# Alors :       dénormalisation = NORMALIZED_VAL * (MAX_VAL - MIN_VAL) + MIN_VAL
-#
-# La multiplication par (MAX_VAL - MIN_VAL) ajuste la plage de valeurs normalisée pour qu'elle corresponde a l'échelle d'origine.
-# L'ajout de MIN_VAL ajuste la valeur pour qu'elle corresponde a la valeur minimale d'origine
 def denormalize(value, min_val, max_val):
     return value * (max_val - min_val) + min_val
 
-# Applique la descente de gradient pour optimiser theta0 et theta1
-# - km_count       =  Les valeurs de kilométrage (caractéristique du modèle)
-# - price          =  Les valeurs cibles (prix réels des voitures)
-# - theta0, theta1 =  Parametre du modèle de regression que nous allons ajuster (init a 0)
-# - alpha          =  Taux d'apprentissage (taille des pas) dans la mise a jour des paramètre
-# - iter_count     =  Nombre d'itération pour exécuter la descente de gradient
-# - m              =  Nombre d'exemple dans les donnés (nbr d'observations)
-#
-# 'sum_error_theta0' et 'sum_error_theta1' sont initialisés pour accumuler les gradients pour 'theta0' et 'theta1' respectivement.
-# 
-# DESCENTE DE GRADIENTS
-# - Boucle sur les exemples
-# - 'predicted_price' donne la valeur prédite par le modèle pour l'exemple 'j'
-# - 'error' done la différence entre la valeur prédite et la valeur réelleµ
-# - Les gradients 'sum_error_theta0' et 'sum_error_theta1' mis à jour en ajoutant respectivement 'error' et 'error * km_count[j]'.
-# 
-# CALCUL DES GRADIENTS MOYENS
-# - 'd_theta0' et 'd_theta1' sont les moyennes des gradients accumulés pour theta0 et theta1. 
-# Cela donne la direction et la magnitude du changement nécessaire pour minimiser l'erreur.
-#
-# MISE A JOUR DES PARANETRES
-# Les paramètres 'theta0' et 'theta1' sont ajustés en soustrayant les gradients multipliés par le taux d'apprentissage alpha. 
-# Cela ajuste les paramètres dans la direction qui minimise l'erreur.
-# 
-# Après avoir complèté les itérations, les paramètres optimisés 'theta0' et 'theta1' sont retournés pour être utilisés dans les prédictions.
 def do_gradient_descent(km_count, price, theta0, theta1, alpha, iter_count):
     m = len(km_count)
     for i in range(iter_count):
