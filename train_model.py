@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,7 +8,28 @@ def compute_cost(predicted_price, price):
     return (1/(2*m)) * np.sum([(price[i] - predicted_price[i]) ** 2 for i in range(m)])
 
 def load_data(file_path='ressources/data.csv'):
-    data = pd.read_csv(file_path)
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"Le fichier {file_path} est introuvable...")
+    
+    try:
+        data = pd.read_csv(file_path)
+    except pd.errors.EmptyDataError:
+        raise ValueError(f"Le fichier {file_path} est vide ou corrompu...")
+    except pd.errors.ParserError:
+        raise ValueError(f"Erreur de parsing du fichier {file_path}...")
+    
+    # Vérifier la présence des colonnes nécessaires
+    required_columns = ['km', 'price']
+    if not all(col in data.columns for col in required_columns):
+        raise KeyError(f"Les colonnes attendues {required_columns} ne correspondent pas...")
+    
+    # Convertir les colonnes en types numériques, forcer les non-numériques à NaN
+    data['km'] = pd.to_numeric(data['km'], errors='coerce')
+    data['price'] = pd.to_numeric(data['price'], errors='coerce')
+
+    # Suppression des lignes avec des valeurs manquantes
+    data = data.dropna(subset=required_columns)
+
     km_count = data['km'].values
     price = data['price'].values
 
