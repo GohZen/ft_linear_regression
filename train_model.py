@@ -3,10 +3,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score
 
-def compute_cost(predicted_price, price):  
-    m = len(price)
-    return (1/(2*m)) * sum([(price[i] - predicted_price[i]) ** 2 for i in range(m)])
-
 def load_data(file_path='ressources/data.csv'):
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Le fichier {file_path} est introuvable...")
@@ -73,9 +69,6 @@ def do_gradient_descent(km_count, price, theta0, theta1, alpha, iter_count):
 
     return theta0, theta1, mse_history
 
-def model(X, theta0, theta1):
-    return [theta0 + (theta1 * x) for x in X]
-
 def plot_data_and_mse(km, price, predict, mse_history):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
@@ -116,7 +109,7 @@ def main():
 
     save_params(theta0_denom, theta1_denom)
 
-    prediction = model(norm_km, theta0, theta1)
+    prediction = [theta0 + (theta1 * x) for x in norm_km]
     prediction_denom = denormalize(prediction, price_min, price_max)
 
     X_ok = denormalize(norm_km, km_min, km_max)
